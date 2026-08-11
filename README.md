@@ -43,9 +43,10 @@ two null models at matched resolution, over 300 held-out images:
 | attention vs centre prior | +0.077 ± 0.178 | 0.327 ± 0.111 |
 
 Not a centre prior. Correlated with brightness but not reducible to it — and the
-residual is structured rather than noise: attention spreads across the extended body of
-a galaxy instead of spiking at its brightest pixel, and over-weights compact point
-sources.
+residual is structured rather than noise. Relative to brightness, attention
+**under-weights the diffuse body of the galaxy and over-weights compact point sources**;
+in `outputs/control_vits8.png` the galaxy reads negative and the foreground stars read
+positive. If attention were a brightness proxy that residual would be unstructured.
 
 Worth stating plainly: **it fires on foreground stars too.** This is an object-ness
 prior transferring, not a galaxy detector.

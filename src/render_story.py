@@ -260,15 +260,20 @@ def main():
     grey = (176, 178, 190, 255)
     legend_y = py + panel + 34
 
+    # Act 2 introduces each map on its own before blinking between them. Going
+    # straight to the blink gives the viewer nothing to compare against and
+    # reads as flicker rather than as a comparison.
     segments = [
         ("hold_raw", 0.8),
         ("wipe", 1.5),
         ("hold_attn", 0.9),
         ("gap1", 0.3),
-        ("focus_raw", 1.4),
-        ("compare", 3.0),
-        ("diff_reveal", 1.4),
-        ("diff_hold", 1.5),
+        ("focus_raw", 1.6),
+        ("show_lum", 1.9),
+        ("show_attn", 1.9),
+        ("compare", 3.3),
+        ("diff_reveal", 1.7),
+        ("diff_hold", 1.9),
         ("gap2", 0.3),
         ("bars", 2.3),
         ("bars_hold", 1.6),
@@ -325,18 +330,39 @@ def main():
                 ], width, height)
                 frame = np.asarray(img)
 
+            elif name == "show_lum":
+                img = Image.fromarray(focus_lum)
+                draw_markers(img, markers, px, py, f_mark)
+                text_block(img, [
+                    ("brightness", f_big, white),
+                    ("what the pixels say", f_sm, grey),
+                ], width, height)
+                frame = np.asarray(img)
+
+            elif name == "show_attn":
+                # Ease over from brightness so the change is a transition, not a cut.
+                a = smoothstep(min(t / 0.22, 1.0))
+                arr = (focus_lum * (1 - a) + focus_attn * a).astype(np.uint8)
+                img = Image.fromarray(arr)
+                draw_markers(img, markers, px, py, f_mark)
+                text_block(img, [
+                    ("attention", f_big, white),
+                    ("where DINO looks", f_sm, grey),
+                ], width, height)
+                frame = np.asarray(img)
+
             elif name == "compare":
                 # Soft square wave between the two maps; the markers never move.
-                phase = (t * 2.2) % 1.0
+                # Slow enough to read each state, having already seen both held.
+                phase = (t * 1.8) % 1.0
                 alpha = float(
-                    smoothstep(np.clip(phase / 0.16, 0, 1))
-                    - smoothstep(np.clip((phase - 0.5) / 0.16, 0, 1))
+                    smoothstep(np.clip(phase / 0.20, 0, 1))
+                    - smoothstep(np.clip((phase - 0.5) / 0.20, 0, 1))
                 )
                 arr = (focus_lum * (1 - alpha) + focus_attn * alpha).astype(np.uint8)
                 img = Image.fromarray(arr)
                 draw_markers(img, markers, px, py, f_mark)
-                label = ("attention — where DINO looks" if alpha > 0.5
-                         else "brightness — what the pixels say")
+                label = "attention" if alpha > 0.5 else "brightness"
                 text_block(img, [
                     ("is it just brightness?", f_big, white),
                     (label, f_sm, grey),
